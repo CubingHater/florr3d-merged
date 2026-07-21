@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>florr3d — admin</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #12151a; color: #e8ecf1; font-family: 'Segoe UI', Ubuntu, Arial, sans-serif; }
+  #app { max-width: 980px; margin: 0 auto; padding: 24px 20px 80px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: #8b95a3; font-size: 13px; margin-bottom: 24px; }
+  .card { background: #1a1f27; border: 1px solid #262d38; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  .row { display: flex; gap: 8px; align-items: center; }
+  input[type=text], input[type=number] {
+    background: #0f1216; border: 1px solid #2c3441; color: #e8ecf1; border-radius: 6px;
+    padding: 8px 10px; font-size: 14px; width: 100%;
+  }
+  select { background: #0f1216; border: 1px solid #2c3441; color: #e8ecf1; border-radius: 6px; padding: 8px 10px; font-size: 14px; }
+  button {
+    background: #2f6fed; color: #fff; border: none; border-radius: 6px; padding: 8px 14px;
+    font-size: 14px; cursor: pointer; white-space: nowrap;
+  }
+  button:hover { background: #3f7cf7; }
+  button.secondary { background: #2c3441; }
+  button.secondary:hover { background: #384156; }
+  button.danger { background: #9c2b2b; }
+  button.danger:hover { background: #b93434; }
+  button:disabled { opacity: 0.5; cursor: default; }
+  .results { margin-top: 10px; display: flex; flex-direction: column; gap: 4px; max-height: 340px; overflow-y: auto; }
+  .acc-item {
+    display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 6px; cursor: pointer;
+    border: 1px solid transparent;
+  }
+  .acc-item:hover { background: #222834; border-color: #313a49; }
+  .acc-item.active { background: #1e2a44; border-color: #2f6fed; }
+  .acc-item img { width: 28px; height: 28px; border-radius: 50%; background: #333; }
+  .acc-item .name { font-weight: 600; font-size: 14px; }
+  .acc-item .meta { font-size: 12px; color: #8b95a3; margin-left: auto; display: flex; gap: 10px; align-items: center; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #555; }
+  .dot.online { background: #34d17c; }
+  .field-grid { display: grid; grid-template-columns: 120px 1fr; gap: 10px; align-items: center; margin-bottom: 10px; }
+  .field-grid label { font-size: 13px; color: #b7c0cc; }
+  .inv-row { display: grid; grid-template-columns: 1fr 130px 100px 34px; gap: 8px; margin-bottom: 6px; align-items: center; }
+  .section-title { font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: #8b95a3; margin: 18px 0 8px; }
+  .toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: #1a1f27; border: 1px solid #2c3441; padding: 10px 18px; border-radius: 8px; font-size: 13px;
+    opacity: 0; transition: opacity 0.25s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+  .toast.error { border-color: #9c2b2b; color: #ff9a9a; }
+  .toast.ok { border-color: #2f9e58; color: #8ef0af; }
+  .muted { color: #8b95a3; font-size: 13px; }
+  .top-status { font-size: 13px; margin-bottom: 18px; }
+  a.back { color: #6ea8ff; text-decoration: none; font-size: 13px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>florr3d admin</h1>
+  <div class="sub">Zoek een geregistreerd Discord-account op en pas level, xp, inventory of loadout aan.</div>
+  <div id="statusBox" class="top-status muted">Bezig met controleren...</div>
+
+  <div id="main" style="display:none;">
+    <div class="card">
+      <div class="section-title" style="margin-top:0;">Mob spawnen</div>
+      <div class="row">
+        <select id="superMobSelect" style="flex:1;"></select>
+        <select id="raritySelect"></select>
+        <button id="spawnSuperBtn">Spawn</button>
+      </div>
+      <p class="muted" style="margin:10px 0 0;">Spawnt willekeurig op de server. Alleen Ultra/Super geven een serverbrede melding — lagere rarities spawnen stil. Super petals hebben 0,01% dropkans.</p>
+    </div>
+    <div class="card">
+      <div class="row">
+        <input type="text" id="searchInput" placeholder="Zoek op gebruikersnaam of Discord ID..." />
+        <button id="searchBtn">Zoeken</button>
+      </div>
+      <div class="results" id="results"></div>
+    </div>
+
+    <div class="card" id="editorCard" style="display:none;">
+      <div class="row" style="justify-content:space-between; margin-bottom: 4px;">
+        <div class="row" style="gap:10px;">
+          <img id="edAvatar" style="width:36px;height:36px;border-radius:50%;background:#333;" />
+          <div>
+            <div id="edName" style="font-weight:700;font-size:15px;"></div>
+            <div id="edMeta" class="muted"></div>
+          </div>
+        </div>
+        <button class="secondary" id="reloadBtn">↻ Herladen</button>
+      </div>
+
+      <div class="section-title">Basis</div>
+      <div class="field-grid">
+        <label>Level</label>
+        <input type="number" id="fLevel" min="1" max="200" />
+        <label>XP</label>
+        <input type="number" id="fXp" min="0" />
+      </div>
+
+      <div class="section-title">Inventory</div>
+      <div id="invRows"></div>
+      <button class="secondary" id="addInvBtn" type="button">+ Petal toevoegen</button>
+
+      <div class="section-title">Opslaan</div>
+      <div class="row">
+        <button id="saveBtn">Opslaan</button>
+        <span class="muted" id="saveHint"></span>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let catalog = { rarities: [], petals: [] };
+let mobCatalog = [];
+let currentAccountId = null;
+let currentSave = null; // { primary, secondary } carried through untouched
+
+function toast(msg, kind) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (kind ? ' ' + kind : '');
+  clearTimeout(toast._h);
+  toast._h = setTimeout(() => { t.className = 'toast'; }, 2600);
+}
+
+async function api(path, opts) {
+  const res = await fetch(path, { credentials: 'include', ...opts });
+  let data = null;
+  try { data = await res.json(); } catch {}
+  if (!res.ok) throw new Error((data && data.error) || ('HTTP ' + res.status));
+  return data;
+}
+
+async function init() {
+  try {
+    const session = await api('/admin/session');
+    $('statusBox').textContent = 'Adminpaneel (geen wachtwoord vereist)';
+    $('main').style.display = '';
+    catalog = await api('/admin/petal-catalog');
+    mobCatalog = (await api('/admin/mob-catalog')).mobs;
+    const select = $('superMobSelect');
+    select.innerHTML = '';
+    for (const mob of mobCatalog) {
+      const option = document.createElement('option');
+      option.value = mob.id; option.textContent = mob.name;
+      select.appendChild(option);
+    }
+    const raritySelect = $('raritySelect');
+    raritySelect.innerHTML = '';
+    for (const r of catalog.rarities) {
+      const opt = document.createElement('option');
+      opt.value = r.id; opt.textContent = r.name;
+      raritySelect.appendChild(opt);
+    }
+    // Default to the highest rarity (Super) to match the old behavior.
+    raritySelect.value = String(catalog.rarities.length - 1);
+  } catch (e) {
+    $('statusBox').textContent = 'Adminpaneel kon niet worden geladen: ' + e.message;
+  }
+}
+
+async function spawnSuper() {
+  const btn = $('spawnSuperBtn');
+  btn.disabled = true;
+  try {
+    const res = await api('/admin/spawn-super', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ type: $('superMobSelect').value, rarity: Number($('raritySelect').value) }),
+    });
+    toast(res.rarity + ' ' + res.name + ' gespawnd!', 'ok');
+  } catch (e) {
+    toast('Spawnen mislukt: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function doSearch() {
+  const q = $('searchInput').value.trim();
+  const box = $('results');
+  box.innerHTML = '<div class="muted">Zoeken...</div>';
+  try {
+    const { accounts } = await api('/admin/search?q=' + encodeURIComponent(q));
+    if (accounts.length === 0) {
+      box.innerHTML = '<div class="muted">Geen accounts gevonden.</div>';
+      return;
+    }
+    box.innerHTML = '';
+    for (const acc of accounts) {
+      const el = document.createElement('div');
+      el.className = 'acc-item' + (acc.id === currentAccountId ? ' active' : '');
+      el.innerHTML = `
+        <img src="${acc.avatar || ''}" onerror="this.style.visibility='hidden'" />
+        <div class="name">${escapeHtml(acc.username || ('#' + acc.id))}</div>
+        <div class="meta">
+          <span>${escapeHtml(acc.discordId || '')}</span>
+          <span class="dot ${acc.online ? 'online' : ''}"></span>
+          <span>${acc.online ? 'online' : 'offline'}</span>
+        </div>`;
+      el.addEventListener('click', () => loadAccount(acc.id));
+      box.appendChild(el);
+    }
+  } catch (e) {
+    box.innerHTML = '';
+    toast('Zoeken mislukt: ' + e.message, 'error');
+  }
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function loadAccount(id) {
+  try {
+    const data = await api('/admin/account/' + id);
+    currentAccountId = id;
+    currentSave = data.save;
+    $('editorCard').style.display = '';
+    $('edAvatar').src = data.avatar || '';
+    $('edName').textContent = data.username || ('#' + data.id);
+    $('edMeta').textContent = `#${data.id} · ${data.discordId} · ${data.online ? 'online' : 'offline'}`;
+    $('fLevel').value = data.save.level;
+    $('fXp').value = data.save.xp;
+    renderInventory(data.save.inventory);
+    $('saveHint').textContent = '';
+    document.querySelectorAll('.acc-item').forEach((el, i) => {});
+    doSearch(); // refresh highlighting of active row
+  } catch (e) {
+    toast('Laden mislukt: ' + e.message, 'error');
+  }
+}
+
+function renderInventory(inventory) {
+  const wrap = $('invRows');
+  wrap.innerHTML = '';
+  for (const entry of inventory) addInvRow(entry.type, entry.rarity, entry.count);
+  if (inventory.length === 0) addInvRow();
+}
+
+function addInvRow(type, rarity, count) {
+  const wrap = $('invRows');
+  const row = document.createElement('div');
+  row.className = 'inv-row';
+
+  const petalSel = document.createElement('select');
+  for (const p of catalog.petals) {
+    const opt = document.createElement('option');
+    opt.value = p.id; opt.textContent = p.name;
+    if (p.id === type) opt.selected = true;
+    petalSel.appendChild(opt);
+  }
+
+  const raritySel = document.createElement('select');
+  for (const r of catalog.rarities) {
+    const opt = document.createElement('option');
+    opt.value = r.id; opt.textContent = r.name;
+    if (r.id === rarity) opt.selected = true;
+    raritySel.appendChild(opt);
+  }
+
+  const countInput = document.createElement('input');
+  countInput.type = 'number'; countInput.min = '1'; countInput.max = '999999';
+  countInput.value = count ?? 1;
+
+  const delBtn = document.createElement('button');
+  delBtn.type = 'button'; delBtn.className = 'danger'; delBtn.textContent = '×';
+  delBtn.addEventListener('click', () => row.remove());
+
+  row.append(petalSel, raritySel, countInput, delBtn);
+  wrap.appendChild(row);
+}
+
+function collectInventory() {
+  const rows = $('invRows').querySelectorAll('.inv-row');
+  const inventory = [];
+  rows.forEach((row) => {
+    const [petalSel, raritySel, countInput] = row.querySelectorAll('select, input');
+    const count = Math.floor(Number(countInput.value));
+    if (count > 0) {
+      inventory.push({ type: petalSel.value, rarity: Number(raritySel.value), count });
+    }
+  });
+  return inventory;
+}
+
+async function save() {
+  if (currentAccountId == null) return;
+  const body = {
+    level: Math.max(1, Math.min(200, Math.floor(Number($('fLevel').value) || 1))),
+    xp: Math.max(0, Math.floor(Number($('fXp').value) || 0)),
+    inventory: collectInventory(),
+    // primary/secondary loadout intentionally omitted: server keeps the
+    // player's existing equipped loadout when these are absent.
+  };
+  $('saveBtn').disabled = true;
+  try {
+    const res = await api('/admin/account/' + currentAccountId, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    toast('Opgeslagen' + (res.online ? ' (live bijgewerkt)' : ''), 'ok');
+    $('saveHint').textContent = 'Laatst opgeslagen: ' + new Date().toLocaleTimeString();
+  } catch (e) {
+    toast('Opslaan mislukt: ' + e.message, 'error');
+  } finally {
+    $('saveBtn').disabled = false;
+  }
+}
+
+$('searchBtn').addEventListener('click', doSearch);
+$('searchInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') doSearch(); });
+$('addInvBtn').addEventListener('click', () => addInvRow());
+$('saveBtn').addEventListener('click', save);
+$('reloadBtn').addEventListener('click', () => currentAccountId != null && loadAccount(currentAccountId));
+$('spawnSuperBtn').addEventListener('click', spawnSuper);
+
+init().then(() => { if ($('main').style.display !== 'none') doSearch(); });
+</script>
+</body>
+</html>
