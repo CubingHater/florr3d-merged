@@ -43,6 +43,7 @@
   .field-grid label { font-size: 13px; color: #b7c0cc; }
   .inv-row { display: grid; grid-template-columns: 1fr 130px 100px 34px; gap: 8px; margin-bottom: 6px; align-items: center; }
   .section-title { font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: #8b95a3; margin: 18px 0 8px; }
+  .section-title:first-child { margin-top: 0; }
   .toast {
     position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
     background: #1a1f27; border: 1px solid #2c3441; padding: 10px 18px; border-radius: 8px; font-size: 13px;
@@ -54,6 +55,27 @@
   .muted { color: #8b95a3; font-size: 13px; }
   .top-status { font-size: 13px; margin-bottom: 18px; }
   a.back { color: #6ea8ff; text-decoration: none; font-size: 13px; }
+
+  /* Loadout editor */
+  .loadout-head { display: grid; grid-template-columns: 56px 1fr 1fr; gap: 8px; font-size: 11px; color: #8b95a3; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+  .loadout-row { display: grid; grid-template-columns: 56px 1fr 1fr; gap: 8px; margin-bottom: 6px; align-items: center; }
+  .loadout-row .slot-label { font-size: 12px; color: #8b95a3; }
+  .loadout-slot { display: flex; gap: 6px; }
+  .loadout-slot select { flex: 1; min-width: 0; }
+
+  /* Mob map */
+  .map-wrap { display: flex; gap: 16px; flex-wrap: wrap; }
+  #mobMap { background: #0f1216; border: 1px solid #2c3441; border-radius: 8px; cursor: crosshair; touch-action: none; }
+  .map-legend { font-size: 12px; color: #8b95a3; margin-top: 8px; line-height: 1.5; }
+  .mob-list { flex: 1; min-width: 220px; max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+  .mob-item {
+    display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; font-size: 13px;
+    background: #14181f; border: 1px solid #232a35;
+  }
+  .mob-item .swatch { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .mob-item .info { flex: 1; min-width: 0; }
+  .mob-item .info .hp { color: #8b95a3; font-size: 11px; }
+  .mob-item button { padding: 4px 8px; font-size: 12px; }
 </style>
 </head>
 <body>
@@ -64,14 +86,35 @@
 
   <div id="main" style="display:none;">
     <div class="card">
-      <div class="section-title" style="margin-top:0;">Mob spawnen</div>
+      <div class="section-title">Mob spawnen</div>
       <div class="row">
         <select id="superMobSelect" style="flex:1;"></select>
         <select id="raritySelect"></select>
-        <button id="spawnSuperBtn">Spawn</button>
+        <button id="spawnSuperBtn">Spawn ergens</button>
       </div>
-      <p class="muted" style="margin:10px 0 0;">Spawnt willekeurig op de server. Alleen Ultra/Super geven een serverbrede melding — lagere rarities spawnen stil. Super petals hebben 0,01% dropkans.</p>
+      <p class="muted" style="margin:10px 0 0;">Spawnt willekeurig op de server, of klik op een lege plek op de kaart hieronder om exact daar te spawnen. Alleen Ultra/Super/Eternal (en Golden Leafbugs, alle rarities) geven een serverbrede melding — lagere rarities spawnen stil. Super petals hebben 0,01% dropkans.</p>
     </div>
+
+    <div class="card">
+      <div class="section-title">Mobs &amp; kaart</div>
+      <div class="map-wrap">
+        <div>
+          <canvas id="mobMap" width="420" height="420"></canvas>
+          <div class="map-legend">
+            Klik op een <b>lege plek</b> om de geselecteerde mob + rarity hierboven daar te spawnen.<br />
+            Klik op een <b>stip</b> om die mob direct te despawnen.
+          </div>
+        </div>
+        <div style="flex:1;min-width:220px;">
+          <div class="row" style="justify-content:space-between;margin-bottom:8px;">
+            <span class="muted" id="mobCountLabel">0 mobs</span>
+            <button class="secondary" id="refreshMapBtn" type="button">↻ Ververs</button>
+          </div>
+          <div class="mob-list" id="mobList"></div>
+        </div>
+      </div>
+    </div>
+
     <div class="card">
       <div class="row">
         <input type="text" id="searchInput" placeholder="Zoek op gebruikersnaam of Discord ID..." />
@@ -104,6 +147,10 @@
       <div id="invRows"></div>
       <button class="secondary" id="addInvBtn" type="button">+ Petal toevoegen</button>
 
+      <div class="section-title">Loadout (petal slots)</div>
+      <div class="loadout-head"><span></span><span>Primary</span><span>Secondary</span></div>
+      <div id="loadoutRows"></div>
+
       <div class="section-title">Opslaan</div>
       <div class="row">
         <button id="saveBtn">Opslaan</button>
@@ -120,6 +167,8 @@ let catalog = { rarities: [], petals: [] };
 let mobCatalog = [];
 let currentAccountId = null;
 let currentSave = null; // { primary, secondary } carried through untouched
+let mobMap = { arenaHalf: 185, mobs: [] };
+let mapRefreshTimer = null;
 
 function toast(msg, kind) {
   const t = $('toast');
@@ -158,27 +207,145 @@ async function init() {
       opt.value = r.id; opt.textContent = r.name;
       raritySelect.appendChild(opt);
     }
-    // Default to the highest rarity (Super) to match the old behavior.
+    // Default to the highest rarity (currently Eternal) to match the old behavior.
     raritySelect.value = String(catalog.rarities.length - 1);
+    await refreshMobMap();
+    if (!mapRefreshTimer) mapRefreshTimer = setInterval(refreshMobMap, 3000);
   } catch (e) {
     $('statusBox').textContent = 'Adminpaneel kon niet worden geladen: ' + e.message;
   }
 }
 
-async function spawnSuper() {
+async function spawnSuper(at) {
   const btn = $('spawnSuperBtn');
   btn.disabled = true;
   try {
+    const body = { type: $('superMobSelect').value, rarity: Number($('raritySelect').value) };
+    if (at) { body.x = at.x; body.z = at.z; }
     const res = await api('/admin/spawn-super', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ type: $('superMobSelect').value, rarity: Number($('raritySelect').value) }),
+      body: JSON.stringify(body),
     });
     toast(res.rarity + ' ' + res.name + ' gespawnd!', 'ok');
+    refreshMobMap();
   } catch (e) {
     toast('Spawnen mislukt: ' + e.message, 'error');
   } finally {
     btn.disabled = false;
   }
+}
+
+async function despawnMob(id) {
+  try {
+    await api('/admin/despawn-mob', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id }),
+    });
+    toast('Mob gedespawned', 'ok');
+    refreshMobMap();
+  } catch (e) {
+    toast('Despawnen mislukt: ' + e.message, 'error');
+  }
+}
+
+async function refreshMobMap() {
+  try {
+    const data = await api('/admin/mobs');
+    mobMap = data;
+    drawMobMap();
+    renderMobList();
+  } catch (e) {
+    // Silent: the map just won't update this tick (e.g. server not ready yet).
+  }
+}
+
+function worldToCanvas(x, z, canvas) {
+  const half = mobMap.arenaHalf || 185;
+  return {
+    cx: ((x + half) / (2 * half)) * canvas.width,
+    cy: ((z + half) / (2 * half)) * canvas.height,
+  };
+}
+
+function canvasToWorld(cx, cy, canvas) {
+  const half = mobMap.arenaHalf || 185;
+  return {
+    x: (cx / canvas.width) * (2 * half) - half,
+    z: (cy / canvas.height) * (2 * half) - half,
+  };
+}
+
+function drawMobMap() {
+  const canvas = $('mobMap');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = '#232a35';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(0.5, 0.5, canvas.width - 1, canvas.height - 1);
+  // Faint center crosshair for orientation.
+  ctx.strokeStyle = '#1a2028';
+  ctx.beginPath();
+  ctx.moveTo(canvas.width / 2, 0); ctx.lineTo(canvas.width / 2, canvas.height);
+  ctx.moveTo(0, canvas.height / 2); ctx.lineTo(canvas.width, canvas.height / 2);
+  ctx.stroke();
+  for (const mob of mobMap.mobs || []) {
+    const { cx, cy } = worldToCanvas(mob.x, mob.z, canvas);
+    ctx.beginPath();
+    ctx.fillStyle = mob.color || '#888';
+    ctx.arc(cx, cy, mob.rarity >= 6 ? 4.5 : 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function renderMobList() {
+  const list = $('mobList');
+  const mobs = [...(mobMap.mobs || [])].sort((a, b) => b.rarity - a.rarity);
+  $('mobCountLabel').textContent = mobs.length + ' mob' + (mobs.length === 1 ? '' : 's');
+  list.innerHTML = '';
+  if (mobs.length === 0) {
+    list.innerHTML = '<div class="muted">Geen mobs geladen.</div>';
+    return;
+  }
+  for (const mob of mobs) {
+    const el = document.createElement('div');
+    el.className = 'mob-item';
+    el.innerHTML = `
+      <span class="swatch" style="background:${mob.color}"></span>
+      <div class="info">
+        <div>${escapeHtml(mob.rarityName)} ${escapeHtml(mob.name)}</div>
+        <div class="hp">${mob.hp}/${mob.maxHp} hp · (${mob.x}, ${mob.z})</div>
+      </div>`;
+    const btn = document.createElement('button');
+    btn.className = 'danger'; btn.type = 'button'; btn.textContent = 'Despawn';
+    btn.addEventListener('click', () => despawnMob(mob.id));
+    el.appendChild(btn);
+    list.appendChild(el);
+  }
+}
+
+function nearestMobAtCanvasPoint(cx, cy, canvas) {
+  let best = null, bestDist = Infinity;
+  for (const mob of mobMap.mobs || []) {
+    const p = worldToCanvas(mob.x, mob.z, canvas);
+    const d = Math.hypot(p.cx - cx, p.cy - cy);
+    if (d < bestDist) { bestDist = d; best = mob; }
+  }
+  // Only count it as "clicked on a mob" within a small pixel radius.
+  return bestDist <= 9 ? best : null;
+}
+
+function onMapClick(evt) {
+  const canvas = $('mobMap');
+  const rect = canvas.getBoundingClientRect();
+  const cx = (evt.clientX - rect.left) * (canvas.width / rect.width);
+  const cy = (evt.clientY - rect.top) * (canvas.height / rect.height);
+  const hit = nearestMobAtCanvasPoint(cx, cy, canvas);
+  if (hit) {
+    despawnMob(hit.id);
+    return;
+  }
+  const world = canvasToWorld(cx, cy, canvas);
+  spawnSuper({ x: Math.round(world.x), z: Math.round(world.z) });
 }
 
 async function doSearch() {
@@ -228,6 +395,7 @@ async function loadAccount(id) {
     $('fLevel').value = data.save.level;
     $('fXp').value = data.save.xp;
     renderInventory(data.save.inventory);
+    renderLoadout(data.save.primary, data.save.secondary);
     $('saveHint').textContent = '';
     document.querySelectorAll('.acc-item').forEach((el, i) => {});
     doSearch(); // refresh highlighting of active row
@@ -289,14 +457,74 @@ function collectInventory() {
   return inventory;
 }
 
+// Builds one petal+rarity select pair for a single loadout slot. `slot` is
+// either { type, rarity } or null/undefined (empty slot).
+function makeLoadoutSlotEl(slot) {
+  const wrap = document.createElement('div');
+  wrap.className = 'loadout-slot';
+
+  const petalSel = document.createElement('select');
+  const emptyOpt = document.createElement('option');
+  emptyOpt.value = ''; emptyOpt.textContent = '— leeg —';
+  petalSel.appendChild(emptyOpt);
+  for (const p of catalog.petals) {
+    const opt = document.createElement('option');
+    opt.value = p.id; opt.textContent = p.name;
+    if (slot && p.id === slot.type) opt.selected = true;
+    petalSel.appendChild(opt);
+  }
+
+  const raritySel = document.createElement('select');
+  for (const r of catalog.rarities) {
+    const opt = document.createElement('option');
+    opt.value = r.id; opt.textContent = r.name;
+    if (slot && r.id === slot.rarity) opt.selected = true;
+    raritySel.appendChild(opt);
+  }
+  raritySel.disabled = !slot;
+
+  petalSel.addEventListener('change', () => { raritySel.disabled = !petalSel.value; });
+
+  wrap.append(petalSel, raritySel);
+  return wrap;
+}
+
+function renderLoadout(primary, secondary) {
+  const wrap = $('loadoutRows');
+  wrap.innerHTML = '';
+  const count = Math.max(primary?.length || 0, secondary?.length || 0, 5);
+  for (let i = 0; i < count; i++) {
+    const row = document.createElement('div');
+    row.className = 'loadout-row';
+    const label = document.createElement('span');
+    label.className = 'slot-label';
+    label.textContent = 'Slot ' + (i + 1);
+    row.appendChild(label);
+    row.appendChild(makeLoadoutSlotEl(primary?.[i] || null));
+    row.appendChild(makeLoadoutSlotEl(secondary?.[i] || null));
+    wrap.appendChild(row);
+  }
+}
+
+function collectLoadoutSide(sideIndex) {
+  const rows = $('loadoutRows').querySelectorAll('.loadout-row');
+  const slots = [];
+  rows.forEach((row) => {
+    const slotEl = row.querySelectorAll('.loadout-slot')[sideIndex];
+    const [petalSel, raritySel] = slotEl.querySelectorAll('select');
+    slots.push(petalSel.value ? { type: petalSel.value, rarity: Number(raritySel.value) } : null);
+  });
+  return slots;
+}
+
 async function save() {
   if (currentAccountId == null) return;
   const body = {
     level: Math.max(1, Math.min(200, Math.floor(Number($('fLevel').value) || 1))),
     xp: Math.max(0, Math.floor(Number($('fXp').value) || 0)),
     inventory: collectInventory(),
-    // primary/secondary loadout intentionally omitted: server keeps the
-    // player's existing equipped loadout when these are absent.
+    primary: collectLoadoutSide(0),
+    secondary: collectLoadoutSide(1),
   };
   $('saveBtn').disabled = true;
   try {
@@ -319,7 +547,9 @@ $('searchInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') doS
 $('addInvBtn').addEventListener('click', () => addInvRow());
 $('saveBtn').addEventListener('click', save);
 $('reloadBtn').addEventListener('click', () => currentAccountId != null && loadAccount(currentAccountId));
-$('spawnSuperBtn').addEventListener('click', spawnSuper);
+$('spawnSuperBtn').addEventListener('click', () => spawnSuper());
+$('refreshMapBtn').addEventListener('click', refreshMobMap);
+$('mobMap').addEventListener('click', onMapClick);
 
 init().then(() => { if ($('main').style.display !== 'none') doSearch(); });
 </script>

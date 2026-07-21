@@ -368,7 +368,7 @@ export class MobManager {
       if (!type) continue;
       const mob = this.spawn(type, rarity, pos);
       if (type === 'anthole') spawnEscort(this, mob);
-      if (rarity === RARITY_IDX.Ultra) this.announceBoss(type, rarity);
+      if (rarity === RARITY_IDX.Ultra || type === 'goldenleafbug') this.announceBoss(type, rarity);
       return;
     }
   }
@@ -381,20 +381,27 @@ export class MobManager {
 
   // Admin-panel manual spawn. `rarity` defaults to Super to preserve the old
   // spawnAdminSuper behavior, but any rarity index can be requested so the
-  // admin panel can spawn Commons through Eternals alike.
-  spawnAdmin(type, rarity = RARITY_IDX.Super) {
+  // admin panel can spawn Commons through Eternals alike. `at` is an
+  // optional { x, z } world position (from the admin map); when omitted a
+  // random valid position is picked like before.
+  spawnAdmin(type, rarity = RARITY_IDX.Super, at = null) {
     if (!MOB_TYPES[type]) throw new Error('unknown mob type');
     if (!Number.isInteger(rarity) || !RARITIES[rarity]) throw new Error('unknown rarity');
     const margin = Math.max(12, MOB_TYPES[type].radius * RARITIES[rarity].scale + 3);
-    const mob = this.spawn(type, rarity, new THREE.Vector3(
-      (Math.random() * 2 - 1) * (ARENA_HALF - margin), 0,
-      (Math.random() * 2 - 1) * (ARENA_HALF - margin),
-    ));
+    const pos = at && Number.isFinite(at.x) && Number.isFinite(at.z)
+      ? new THREE.Vector3(at.x, 0, at.z)
+      : new THREE.Vector3(
+        (Math.random() * 2 - 1) * (ARENA_HALF - margin), 0,
+        (Math.random() * 2 - 1) * (ARENA_HALF - margin),
+      );
+    clampToArena(pos, margin);
+    const mob = this.spawn(type, rarity, pos);
     if (type === 'anthole') spawnEscort(this, mob);
     // Only Ultra and above are meant to broadcast a server-wide spawn
     // message — same threshold as natural spawns in trySpawn(). Lower
-    // rarities spawn silently even when triggered from the admin panel.
-    if (rarity >= RARITY_IDX.Ultra) this.announceBoss(type, rarity);
+    // rarities spawn silently even when triggered from the admin panel,
+    // except Golden Leafbugs, which always announce regardless of rarity.
+    if (rarity >= RARITY_IDX.Ultra || type === 'goldenleafbug') this.announceBoss(type, rarity);
     return mob;
   }
 
@@ -403,11 +410,22 @@ export class MobManager {
     return this.spawnAdmin(type, RARITY_IDX.Super);
   }
 
+  // Admin-panel manual despawn: just flags the mob dead. update() already
+  // sweeps deadFlag mobs out of this.mobs every tick, and die()'s xp/drop
+  // logic is intentionally skipped here — an admin despawn isn't a kill.
+  despawn(id) {
+    const mob = this.mobs.find((m) => m.id === id);
+    if (!mob) return false;
+    mob.deadFlag = true;
+    return true;
+  }
+
   announceBoss(type, rarity) {
     const name = RARITIES[rarity].name;
     this.world.events.push({ e: 'toast', text: `A ${name} ${MOB_TYPES[type].name} has spawned somewhere` });
     if (rarity === RARITY_IDX.Ultra) notifyUltraSpawn(MOB_TYPES[type].name);
   }
+
 
   fireMissile(hornet, player) {
     const r = RARITIES[hornet.rarity];

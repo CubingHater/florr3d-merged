@@ -3,7 +3,7 @@ import { sessionFromCookie, parseCookies } from './auth.js';
 import { getAccountFull, searchAccounts, loadSave, writeSave } from './db.js';
 import { gameWorld, liveAccounts } from './ws.js';
 import { clientIp } from './utils.js';
-import { PETAL_TYPES, RARITIES, MOB_TYPES, PLAYER_MODEL_IDS } from '../shared/config.js';
+import { PETAL_TYPES, RARITIES, MOB_TYPES, PLAYER_MODEL_IDS, ARENA_HALF } from '../shared/config.js';
 
 // Comma-separated Discord user IDs, e.g. ADMIN_DISCORD_IDS=123456789012345678,987654321098765432
 // Optional: admins recognized via their linked Discord account.
@@ -121,10 +121,9 @@ function normalizeSlot(slot) {
 // Player.applySave()/serializeSave() already use, so it can be written to the
 // DB directly and, if the account is online, handed straight to the live
 // Player instance.
-// `existing` is the player's current save (if any). The admin UI only edits
-// level/xp/inventory, not the equipped-petal loadout, so when the request
-// omits primary/secondary we carry the existing loadout forward instead of
-// wiping it.
+// `existing` is the player's current save (if any); when the request omits
+// primary/secondary (e.g. an older client) we carry the existing loadout
+// forward instead of wiping it.
 function normalizeSave(body, existing = {}) {
   const level = Number.isInteger(body.level) ? Math.max(1, Math.min(200, body.level)) : 1;
   const xp = Number.isFinite(body.xp) && body.xp >= 0 ? Math.floor(body.xp) : 0;
@@ -237,9 +236,42 @@ export async function handleAdmin(req, res) {
     const superIdx = RARITIES.findIndex((r) => r.name === 'Super');
     const rarity = body.rarity === undefined ? superIdx : Number(body.rarity);
     if (!Number.isInteger(rarity) || !RARITIES[rarity]) { json(res, 400, { error: 'unknown rarity' }); return true; }
-    const mob = gameWorld.mobs.spawnAdmin(body.type, rarity);
+    // x/z are optional world coordinates (e.g. picked on the admin map). When
+    // omitted, a random valid position is picked like before.
+    const at = (Number.isFinite(body.x) && Number.isFinite(body.z))
+      ? { x: Number(body.x), z: Number(body.z) } : null;
+    const mob = gameWorld.mobs.spawnAdmin(body.type, rarity, at);
     console.log(`[admin] spawned ${RARITIES[rarity].name} ${MOB_TYPES[body.type].name} (#${mob.id})`);
     json(res, 200, { ok: true, id: mob.id, name: MOB_TYPES[body.type].name, rarity: RARITIES[rarity].name });
+    return true;
+  }
+
+  if (url.pathname === '/admin/mobs' && req.method === 'GET') {
+    if (!gameWorld) { json(res, 503, { error: 'game server is not ready' }); return true; }
+    const mobs = gameWorld.mobs.mobs.map((m) => ({
+      id: m.id,
+      type: m.type,
+      name: MOB_TYPES[m.type]?.name || m.type,
+      rarity: m.rarity,
+      rarityName: RARITIES[m.rarity]?.name || '',
+      color: RARITIES[m.rarity]?.color || '#888888',
+      x: Math.round(m.pos.x * 10) / 10,
+      z: Math.round(m.pos.z * 10) / 10,
+      hp: Math.round(m.hp),
+      maxHp: Math.round(m.maxHp),
+    }));
+    json(res, 200, { mobs, arenaHalf: ARENA_HALF });
+    return true;
+  }
+
+  if (url.pathname === '/admin/despawn-mob' && req.method === 'POST') {
+    let body;
+    try { body = await readJsonBody(req); } catch { json(res, 400, { error: 'bad body' }); return true; }
+    if (!gameWorld) { json(res, 503, { error: 'game server is not ready' }); return true; }
+    const ok = gameWorld.mobs.despawn(body.id);
+    if (!ok) { json(res, 404, { error: 'mob not found' }); return true; }
+    console.log(`[admin] despawned mob #${body.id}`);
+    json(res, 200, { ok: true });
     return true;
   }
 
