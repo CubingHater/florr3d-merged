@@ -274,6 +274,16 @@
     #loginnudge { font-size: 14px; color: #ffe763; text-align: center; line-height: 1.5; }
     #loginnudge.hidden { display: none; }
 
+    /* credits: pinned to the bottom-middle of the name-gate screen, out of
+       the centered title/play-button flow (which lives in the same
+       flex column but isn't absolutely positioned) */
+    #credits { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%);
+               width: 640px; max-width: calc(100vw - 40px); text-align: center;
+               font-size: 12px; line-height: 1.55; color: #fff; opacity: 0.85; }
+    #credits .creditlicense { margin-top: 10px; }
+    #credits a { color: #ffe763; text-decoration: underline; }
+    #credits a:hover { color: #fff; }
+
     /* Guest → Discord save-merge chooser */
     #mergemodal { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,0.6);
                   display: flex; align-items: center; justify-content: center; padding: 16px; }
@@ -431,6 +441,18 @@
         <span id="authstate" class="stroke"></span>
       </div>
       <div id="loginnudge" class="stroke hidden">Playing as a guest — your progress is saved on this browser.<br />Sign in with Discord to keep it safe and play across devices!</div>
+      <div id="credits">
+        This game is a faithful continuation and updated version of
+        <!-- TODO: link to meh-a's original repo once we have the URL -->
+        meh-a's original 3d florr game, once hosted at 3dflorr.net.
+        We will never monetize this or use it to advertise anything else in bad faith.
+        <div class="creditlicense">
+          Used in accordance to the copyright license, which can be found at
+          <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">creativecommons.org/licenses/by-nc/4.0</a>.
+          <br />
+          <a href="https://github.com/CubingHater/florr3d-merged" target="_blank" rel="noopener">This game's GitHub repo</a>
+        </div>
+      </div>
     </div>
     <div id="death">
       <div class="big stroke">You died</div>
