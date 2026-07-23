@@ -2,7 +2,6 @@ import { defineConfig } from 'vite';
 import dotenv from 'dotenv';
 import { attachGameServer } from './server/ws.js';
 import { handleAuth, parseCookies, ensureSession, isDiscordAccount } from './server/auth.js';
-import { handleAdmin } from './server/admin.js';
 import { mapPayload } from './server/map.js';
 import { mintJoinToken } from './server/jointoken.js';
 import { verifyTurnstile, turnstileConfigured, TURNSTILE_SITE_KEY } from './server/turnstile.js';
