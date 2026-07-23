@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>florr3d — admin</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #12151a; color: #e8ecf1; font-family: 'Segoe UI', Ubuntu, Arial, sans-serif; }
+  #app { max-width: 980px; margin: 0 auto; padding: 24px 20px 80px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: #8b95a3; font-size: 13px; margin-bottom: 24px; }
+  .card { background: #1a1f27; border: 1px solid #262d38; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  .row { display: flex; gap: 8px; align-items: center; }
+  input[type=text], input[type=number] {
+    background: #0f1216; border: 1px solid #2c3441; color: #e8ecf1; border-radius: 6px;
+    padding: 8px 10px; font-size: 14px; width: 100%;
+  }
+  select { background: #0f1216; border: 1px solid #2c3441; color: #e8ecf1; border-radius: 6px; padding: 8px 10px; font-size: 14px; }
+  button {
+    background: #2f6fed; color: #fff; border: none; border-radius: 6px; padding: 8px 14px;
+    font-size: 14px; cursor: pointer; white-space: nowrap;
+  }
+  button:hover { background: #3f7cf7; }
+  button.secondary { background: #2c3441; }
+  button.secondary:hover { background: #384156; }
+  button.danger { background: #9c2b2b; }
+  button.danger:hover { background: #b93434; }
+  button:disabled { opacity: 0.5; cursor: default; }
+  .results { margin-top: 10px; display: flex; flex-direction: column; gap: 4px; max-height: 340px; overflow-y: auto; }
+  .acc-item {
+    display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 6px; cursor: pointer;
+    border: 1px solid transparent;
+  }
+  .acc-item:hover { background: #222834; border-color: #313a49; }
+  .acc-item.active { background: #1e2a44; border-color: #2f6fed; }
+  .acc-item img { width: 28px; height: 28px; border-radius: 50%; background: #333; }
+  .acc-item .name { font-weight: 600; font-size: 14px; }
+  .acc-item .meta { font-size: 12px; color: #8b95a3; margin-left: auto; display: flex; gap: 10px; align-items: center; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #555; }
+  .dot.online { background: #34d17c; }
+  .field-grid { display: grid; grid-template-columns: 120px 1fr; gap: 10px; align-items: center; margin-bottom: 10px; }
+  .field-grid label { font-size: 13px; color: #b7c0cc; }
+  table.drop-matrix { border-collapse: collapse; font-size: 12px; margin-bottom: 8px; }
+  table.drop-matrix th { padding: 4px 6px; font-weight: 600; white-space: nowrap; }
+  table.drop-matrix td { padding: 2px 4px; }
+  table.drop-matrix input { width: 56px; }
+  .inv-row { display: grid; grid-template-columns: 1fr 130px 100px 34px; gap: 8px; margin-bottom: 6px; align-items: center; }
+  .section-title { font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; color: #8b95a3; margin: 18px 0 8px; }
+  .section-title:first-child { margin-top: 0; }
+  .toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: #1a1f27; border: 1px solid #2c3441; padding: 10px 18px; border-radius: 8px; font-size: 13px;
+    opacity: 0; transition: opacity 0.25s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+  .toast.error { border-color: #9c2b2b; color: #ff9a9a; }
+  .toast.ok { border-color: #2f9e58; color: #8ef0af; }
+  .muted { color: #8b95a3; font-size: 13px; }
+  .top-status { font-size: 13px; margin-bottom: 18px; }
+  a.back { color: #6ea8ff; text-decoration: none; font-size: 13px; }
+
+  /* Loadout editor */
+  .loadout-head { display: grid; grid-template-columns: 56px 1fr 1fr; gap: 8px; font-size: 11px; color: #8b95a3; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+  .loadout-row { display: grid; grid-template-columns: 56px 1fr 1fr; gap: 8px; margin-bottom: 6px; align-items: center; }
+  .loadout-row .slot-label { font-size: 12px; color: #8b95a3; }
+  .loadout-slot { display: flex; gap: 6px; }
+  .loadout-slot select { flex: 1; min-width: 0; }
+
+  /* Mob map */
+  .map-wrap { display: flex; gap: 16px; flex-wrap: wrap; }
+  #mobMap { background: #0f1216; border: 1px solid #2c3441; border-radius: 8px; cursor: crosshair; touch-action: none; }
+  .map-legend { font-size: 12px; color: #8b95a3; margin-top: 8px; line-height: 1.5; }
+  .mob-list { flex: 1; min-width: 220px; max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+  .mob-item {
+    display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; font-size: 13px;
+    background: #14181f; border: 1px solid #232a35;
+  }
+  .mob-item .swatch { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .mob-item .info { flex: 1; min-width: 0; }
+  .mob-item .info .hp { color: #8b95a3; font-size: 11px; }
+  .mob-item button { padding: 4px 8px; font-size: 12px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>florr3d admin</h1>
+  <div class="sub">Zoek een geregistreerd Discord-account op en pas level, xp, inventory of loadout aan.</div>
+  <div id="statusBox" class="top-status muted">Bezig met controleren...</div>
+
+  <div id="loginCard" class="card" style="display:none;">
+    <div class="section-title">Inloggen met wachtwoord</div>
+    <div class="row">
+      <input type="password" id="passwordInput" placeholder="Admin-wachtwoord" autocomplete="off" />
+      <button id="passwordLoginBtn">Inloggen</button>
+    </div>
+  </div>
+  <div id="main" style="display:none;">
+    <div class="card">
+      <div class="section-title">Mob spawnen</div>
+      <div class="row">
+        <select id="superMobSelect" style="flex:1;"></select>
+        <select id="raritySelect"></select>
+        <button id="spawnSuperBtn">Spawn ergens</button>
+      </div>
+      <p class="muted" style="margin:10px 0 0;">Spawnt willekeurig op de server, of klik op een lege plek op de kaart hieronder om exact daar te spawnen. Alleen Ultra/Super/Eternal (en Golden Leafbugs, alle rarities) geven een serverbrede melding — lagere rarities spawnen stil. Super petals hebben 0,01% dropkans.</p>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Gameplay instellingen</div>
+
+      <p class="muted" style="margin:0 0 8px;">Drop-rarity per mob-rarity: selecteer eerst de mob-rarity om de drop-gewichten voor alle petal-rarities in te stellen. Alleen de verhouding binnen een rij telt (hoeven niet op te tellen tot 100) — 0 betekent dat die rarity nooit droppt. Super/Eternal-mobs hebben hun eigen vaste droplogica en staan hier niet bij.</p>
+      
+      <div class="field-grid">
+        <label>Mob rarity</label>
+        <select id="mobRaritySelect"></select>
+      </div>
+      <div id="dropUpgradeRows"></div>
+
+      <div class="section-title">Mob drop slots</div>
+      <p class="muted" style="margin:0 0 8px;">Configureer 5 drop slots per mob type. Elk slot kan meerdere drops hebben met gewichten. 'Nothing' zorgt voor een kans dat er niks wordt gedropt.</p>
+      
+      <div class="field-grid">
+        <label>Mob type</label>
+        <select id="mobTypeSelect"></select>
+      </div>
+      <div id="mobDropSlots"></div>
+      <div class="row" style="margin-top:10px;">
+        <button id="saveMobDropsBtn">Mob drops opslaan</button>
+        <span class="muted" id="mobDropsHint"></span>
+      </div>
+
+      <div class="section-title">Sacrifice-spawn gewichten</div>
+      <p class="muted" style="margin:0 0 8px;">Relatief gewicht per mob-type bij: Blood Sacrifice op de Assembler, en de gegarandeerde Ultra/Super timers hieronder. Hoger = vaker gekozen, 0 = nooit.</p>
+      <div id="sacrificeWeightRows"></div>
+
+      <div class="section-title">Overig</div>
+      <div class="field-grid">
+        <label>Blood Sacrifice drop %</label>
+        <input type="number" id="bloodSacrificeChanceInput" min="0" max="100" step="0.001" />
+        <label>Golden Leaf % / rarity</label>
+        <input type="number" id="goldenLeafPercentInput" min="0" max="100" step="0.1" />
+        <label>Privet basis %</label>
+        <input type="number" id="privetBasePercentInput" min="0" max="500" step="0.1" />
+        <label>Ultra elke (min)</label>
+        <input type="number" id="ultraIntervalInput" min="0" step="0.1" />
+        <label>Super elke (min)</label>
+        <input type="number" id="superIntervalInput" min="0" step="0.1" />
+      </div>
+      <p class="muted" style="margin:4px 0 10px;">Zet een interval op 0 om die gegarandeerde spawn uit te schakelen.</p>
+
+      <div class="row">
+        <button id="saveSettingsBtn">Instellingen opslaan</button>
+        <span class="muted" id="settingsHint"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Mobs &amp; kaart</div>
+      <div class="map-wrap">
+        <div>
+          <canvas id="mobMap" width="420" height="420"></canvas>
+          <div class="map-legend">
+            Klik op een <b>lege plek</b> om de geselecteerde mob + rarity hierboven daar te spawnen.<br />
+            Klik op een <b>stip</b> om die mob direct te despawnen.
+          </div>
+        </div>
+        <div style="flex:1;min-width:220px;">
+          <div class="row" style="justify-content:space-between;margin-bottom:8px;">
+            <span class="muted" id="mobCountLabel">0 mobs</span>
+            <button class="secondary" id="refreshMapBtn" type="button">↻ Ververs</button>
+          </div>
+          <div class="mob-list" id="mobList"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <input type="text" id="searchInput" placeholder="Zoek op gebruikersnaam of Discord ID..." />
+        <button id="searchBtn">Zoeken</button>
+      </div>
+      <div class="results" id="results"></div>
+    </div>
+
+    <div class="card" id="editorCard" style="display:none;">
+      <div class="row" style="justify-content:space-between; margin-bottom: 4px;">
+        <div class="row" style="gap:10px;">
+          <img id="edAvatar" style="width:36px;height:36px;border-radius:50%;background:#333;" />
+          <div>
+            <div id="edName" style="font-weight:700;font-size:15px;"></div>
+            <div id="edMeta" class="muted"></div>
+          </div>
+        </div>
+        <button class="secondary" id="reloadBtn">↻ Herladen</button>
+      </div>
+
+      <div class="section-title">Basis</div>
+      <div class="field-grid">
+        <label>Level</label>
+        <input type="number" id="fLevel" min="1" max="200" />
+        <label>XP</label>
+        <input type="number" id="fXp" min="0" />
+      </div>
+
+      <div class="section-title">Inventory</div>
+      <div id="invRows"></div>
+      <button class="secondary" id="addInvBtn" type="button">+ Petal toevoegen</button>
+
+      <div class="section-title">Loadout (petal slots)</div>
+      <div class="loadout-head"><span></span><span>Primary</span><span>Secondary</span></div>
+      <div id="loadoutRows"></div>
+
+      <div class="section-title">Opslaan</div>
+      <div class="row">
+        <button id="saveBtn">Opslaan</button>
+        <button id="clearBtn" class="danger">Inventory & Loadout Wissen</button>
+        <span class="muted" id="saveHint"></span>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="admin.js"></script>
+</body>
+</html>
