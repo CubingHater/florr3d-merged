@@ -23,8 +23,8 @@ const MODELS = {
   bush: { url: new URL('../assets/bush.glb', import.meta.url), yaw: YAW, flip: Math.PI },
   firefly: { url: new URL('../assets/firefly.glb', import.meta.url), yaw: YAW + Math.PI / 2, flip: Math.PI },
   assembler: { url: new URL('../assets/assembler.glb', import.meta.url), yaw: YAW },
-  mummybeetle: { url: new URL('../assets/mummybeetle.glb', import.meta.url), yaw: YAW - Math.PI / 2 },
-  egyptbeetle: { url: new URL('../assets/egyptbeetle.glb', import.meta.url), yaw: YAW - Math.PI / 2 },
+  mummybeetle: { url: new URL('../assets/mummybeetle.glb', import.meta.url), yaw: YAW + Math.PI / 2 },
+  egyptbeetle: { url: new URL('../assets/egyptbeetle.glb', import.meta.url), yaw: YAW + Math.PI / 2 },
   hornetmissile: { url: new URL('../assets/hornetmissile.glb', import.meta.url), yaw: -YAW },
 };
 

@@ -30,7 +30,7 @@ function defaultDropRarityWeights() {
     [0, 0, 50, 50, 0, 0, 0, 0, 0],     // Epic mob: 50% rare, 50% epic
     [0, 0, 0, 60, 40, 0, 0, 0, 0],     // Legendary mob: 60% epic, 40% legendary
     [0, 0, 0, 0, 80, 20, 0, 0, 0],     // Mythic mob: 80% legendary, 20% mythic
-    [0, 0, 0, 0, 15, 75, 10, 0, 0],    // Ultra mob: 15% legendary, 75% mythic, 10% ultra
+    [0, 0, 0, 0, 19, 75, 6, 0, 0],    // Ultra mob: 19% legendary, 75% mythic, 6% ultra
     [0, 0, 0, 0, 0, 60, 39.9, 0.1, 0], // Super mob: 60% mythic, 39.9% ultra, 0.1% super
     [0, 0, 0, 0, 0, 0, 0, 0, 0],       // Eternal mob: special case (always golden leaf)
   ];
@@ -55,7 +55,7 @@ const DEFAULTS = {
   // Chance [0..1], rolled per eligible participant on every mob kill of any
   // rarity, of an extra Super-rarity Blood Sacrifice drop (on top of the
   // mob's normal drop).
-  bloodSacrificeDropChance: 0.001,
+  bloodSacrificeDropChance: 0.0001,
   // Reload-time reduction granted per Golden Leaf rarity tier (Common = 0,
   // Unusual = 1, ...), stacking across multiple equipped Golden Leafs.
   // 0.05 = 5% less reload per tier (capped at 90% total, see petals.js).
@@ -65,8 +65,8 @@ const DEFAULTS = {
   // of difference (see getPrivetMultiplier in petals.js). 0.25 = +25%.
   privetBasePercent: 0.25,
   // Guaranteed periodic spawns, in seconds. 0 disables that timer entirely.
-  ultraSpawnIntervalSec: 180,
-  superSpawnIntervalSec: 3000,
+  ultraSpawnIntervalSec: 300,
+  superSpawnIntervalSec: 15000,
 };
 
 // A single live, mutable object, seeded with defaults. Other modules import

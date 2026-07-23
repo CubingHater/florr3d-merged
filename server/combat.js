@@ -32,6 +32,11 @@ export function updateCombat(world, dt) {
             
             // mobsummon: mob spawns other mobs on its side when attacking
             if (mob.def.mobsummon && MOB_TYPES[mob.def.mobsummon]) {
+              // Limit egypt beetle to max 5 mummy beetle spawns per fight
+              if (mob.type === 'egyptbeetle') {
+                mob.summonCount = (mob.summonCount || 0) + 1;
+                if (mob.summonCount > 5) return;
+              }
               const summonType = mob.def.mobsummon;
               const summonRarity = mob.rarity > 0 ? mob.rarity - 1 : 0;
               const spawnPos = mob.pos.clone().add(

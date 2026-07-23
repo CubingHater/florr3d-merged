@@ -85,7 +85,7 @@ export const MOB_TYPES = {
   },
   scorpion: {
     name: 'Scorpion', hp: 80, dmg: 40, armor: 3, radius: 2.0, speed: 8, xp: 15,
-    dropSlots: [[['iris', 1]], [['pincer', 1]], [], [], []],
+    dropSlots: [[['iris', 1]], [['pincer', 1]], [['jobapplication', 0.01]], [], []],
     sightAggro: 18,
     spawnWeight: 0.44,
     spawnBiome: 'desert',
@@ -181,7 +181,8 @@ export const MOB_TYPES = {
     name: 'Beetle', hp: 70, dmg: 30, armor: 1, radius: 2.0, speed: 3, xp: 18,
     dropSlots: [[['privet', 1]], [['beetleegg', 1]], [], [], []],
     sightAggro: 14,
-    spawnWeight: 0,
+    spawnWeight: 0.02,
+    spawnBiome: 'desert',
     mobdeathtime: 5,
     mobsummon: null,
   },
@@ -189,7 +190,8 @@ export const MOB_TYPES = {
     name: 'Beetle', hp: 200, dmg: 60, armor: 3, radius: 4.0, speed: 3, xp: 30,
     dropSlots: [[['privet', 1]], [['crown', 1],['nothing', 9]], [], [], []],
     sightAggro: 14,
-    spawnWeight: 0,
+    spawnWeight: 0.005,
+    spawnBiome: 'desert',
     mobdeathtime: 10,
     mobsummon: 'mummybeetle',
   },
@@ -296,6 +298,7 @@ export const PLAYER_MODEL_IDS = [
   'bee', 'hornet', 'ladybug', 'queen', 'worker', 'baby', 'anthole',
   'scorpion', 'beetle', 'nazarbeetle', 'cactus', 'jungleladybug',
   'shinyladybug', 'goldenleafbug', 'leafbug', 'bush', 'assembler',
+  'mummybeetle', 'egyptbeetle',
 ];
 
 export const FLIGHT = {

@@ -11,7 +11,6 @@ import { join, normalize, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { attachGameServer } from './ws.js';
 import { handleAuth, parseCookies, ensureSession, isDiscordAccount } from './auth.js';
-import { handleAdmin } from './admin.js';
 import { mapPayload } from './map.js';
 import { mintJoinToken } from './jointoken.js';
 import { verifyTurnstile, turnstileConfigured, TURNSTILE_SITE_KEY } from './turnstile.js';
@@ -43,7 +42,6 @@ async function handleRequest(req, res) {
   if (handleCorsPreflight(req, res)) return;
   applyCors(req, res);
   if (await handleAuth(req, res)) return;
-  if (await handleAdmin(req, res)) return;
   const accountId = ensureSession(req, res);
   const pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
   if (pathname === '/map.json') {
