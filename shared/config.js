@@ -183,7 +183,7 @@ export const MOB_TYPES = {
     sightAggro: 14,
     spawnWeight: 0.02,
     spawnBiome: 'desert',
-    mobdeathtime: 5,
+    mobdeathtime: 0.5,
     mobsummon: null,
   },
   egyptbeetle: {
@@ -192,7 +192,7 @@ export const MOB_TYPES = {
     sightAggro: 14,
     spawnWeight: 0.005,
     spawnBiome: 'desert',
-    mobdeathtime: 10,
+    mobdeathtime: 1,
     mobsummon: 'mummybeetle',
   },
 };
