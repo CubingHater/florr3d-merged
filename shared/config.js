@@ -272,7 +272,7 @@ export const PETAL_TYPES = {
   crown:     { name: 'Crown',   hp: 1, dmg: 0, reload: 10, radius: 0.42, count: 3, color: '#ffffff',
                desc: 'Summons some old friends from Egypt.',
                minusarmor: 0, flowerarmor: 0, yinyang: false, petalsummon: 'mummybeetle', flowerhealth: 0 },
-  beetleegg:     { name: 'Beetle Egg',   hp: 1, dmg: 0, reload: 5, radius: 0.42, count: 1, color: '#ffffff',
+  beetleegg:     { name: 'Beetle Egg',   hp: 1, dmg: 0, reload: 75, radius: 0.42, count: 1, color: '#ffffff',
                desc: 'A nice petal, not too strong but not too weak.',
                minusarmor: 0, flowerarmor: 0, yinyang: false, petalsummon: 'beetle', flowerhealth: 0 },
   root:     { name: 'Root',   hp: 10, dmg: 5, reload: 2, radius: 0.42, count: 1, color: '#ffffff',
