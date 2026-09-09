@@ -209,7 +209,12 @@ export class World {
     updateCombat(this, dt);
     // Combat runs after MobManager.update(), so remove a killed mob here as
     // well instead of showing a zero-health entity for an extra network tick.
-    this.mobs.mobs = this.mobs.mobs.filter((mob) => !mob.deadFlag);
+    // In-place removal for better performance
+    for (let i = this.mobs.mobs.length - 1; i >= 0; i--) {
+      if (this.mobs.mobs[i].deadFlag) {
+        this.mobs.mobs.splice(i, 1);
+      }
+    }
   }
 
   buildTick(spectators = []) {
@@ -251,12 +256,21 @@ export class World {
     const views = new Map();
     for (const p of players) {
       const px = p.pos.x, pz = p.pos.z;
-      const others = alive
-        .filter((o) => o.id !== p.id)
-        .map((o) => ({ o, d: (o.pos.x - px) ** 2 + (o.pos.z - pz) ** 2 }))
-        .sort((a, b) => a.d - b.d)
-        .slice(0, 3)
-        .map(({ o }) => ({ name: o.name, x: r2c(o.pos.x), z: r2c(o.pos.z) }));
+      // Manual top-3 selection to avoid sort (O(n) instead of O(n log n))
+      const nearby = [];
+      for (const o of alive) {
+        if (o.id === p.id) continue;
+        const d = (o.pos.x - px) ** 2 + (o.pos.z - pz) ** 2;
+        if (nearby.length < 3) {
+          nearby.push({ o, d });
+        } else if (d < nearby[2].d) {
+          nearby[2] = { o, d };
+          // Bubble sort last element
+          if (nearby[1].d > nearby[2].d) [nearby[1], nearby[2]] = [nearby[2], nearby[1]];
+          if (nearby[0].d > nearby[1].d) [nearby[0], nearby[1]] = [nearby[1], nearby[0]];
+        }
+      }
+      const others = nearby.map(({ o }) => ({ name: o.name, x: r2c(o.pos.x), z: r2c(o.pos.z) }));
       const view = {
         px, pz, you: p.id, time: r2c(this.time), others,
         events: [...p.events, ...globalEvents, ...nearEvents(px, pz)].slice(0, 80),

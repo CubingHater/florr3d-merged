@@ -43,7 +43,7 @@ function flushLeaderboard(player) {
   }
 }
 
-const TICK_MS = 1000 / 20;
+const TICK_MS = 1000 / 15;
 const AUTOSAVE_MS = 60_000;
 const HEARTBEAT_MS = 30_000;
 const MAX_BUFFERED = 1_000_000;
