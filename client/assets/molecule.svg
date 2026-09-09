@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   viewBox="0 0 512 512"
+   style="height: 512px; width: 512px;"
+   version="1.1"
+   id="svg2"
+   sodipodi:docname="molecule.svg"
+   inkscape:version="1.4.2 (f4327f4, 2025-05-13)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs2" />
+  <sodipodi:namedview
+     id="namedview2"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="0.27863046"
+     inkscape:cx="226.10594"
+     inkscape:cy="-134.58687"
+     inkscape:window-width="1920"
+     inkscape:window-height="1009"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg2" />
+  <path
+     d="M 25.6,25.6 H 486.4 V 486.4 H 25.6 Z"
+     fill="#db9d5a"
+     fill-opacity="1"
+     id="path1"
+     style="stroke:#b17f49;stroke-width:21.6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1" />
+  <g
+     class=""
+     transform="matrix(0.9,0,0,0.9,25.6,25.6)"
+     id="g2">
+    <path
+       d="m 132.172,157.504 a 155.154,155.154 0 0 0 -18.296,21.698 99.274,99.274 0 1 1 186.291,-53.827 153.447,153.447 0 0 0 -58.134,-12.138 h -1.982 a 152.767,152.767 0 0 0 -107.879,44.267 z m 105.97,263.021 A 153.877,153.877 0 0 1 93.014,311.583 a 99.286,99.286 0 1 0 162.84,108.154 155.965,155.965 0 0 1 -15.719,0.8 h -1.981 z M 363.243,189.263 h -1.098 a 84.642,84.642 0 0 0 -1.05,169.272 h 1.098 a 84.642,84.642 0 0 0 1.05,-169.272 z m -104.8,83.317 a 103.834,103.834 0 0 1 78.317,-99.286 134.136,134.136 0 0 0 -94.942,-40.96 h -1.743 a 134.566,134.566 0 0 0 -1.67,269.107 h 1.742 a 133.993,133.993 0 0 0 85.31,-30.53 103.917,103.917 0 0 1 -67.014,-98.33 z"
+       fill="#ffffff"
+       fill-opacity="1"
+       id="path2" />
+  </g>
+</svg>
