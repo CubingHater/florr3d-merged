@@ -83,14 +83,37 @@ export const settings = {
   sacrificeSpawnWeights: { ...DEFAULTS.sacrificeSpawnWeights },
 };
 
+// Log drop rarity weights at module load for debugging
+console.log('[DROP WEIGHTS] Current drop rarity weights:');
+settings.dropRarityWeights.forEach((weights, mobRarity) => {
+  const total = weights.reduce((sum, w) => sum + (Number.isFinite(w) && w > 0 ? w : 0), 0);
+  const activeWeights = weights.map((w, i) => `${RARITIES[i].name}:${w}`).filter(w => w.includes(':') && !w.endsWith(':0')).join(', ');
+  console.log(`  ${RARITIES[mobRarity].name} mob: total=${total}, active=[${activeWeights || 'none'}]`);
+});
+
 // Picks a rarity index by weighted random choice among `weights` (one weight
 // per rarity index, non-negative, need not sum to 1). Falls back to
-// `fallbackIdx` if the row is missing or every weight in it is 0.
-export function pickWeightedRarity(weights, fallbackIdx = 0) {
-  if (!Array.isArray(weights)) return fallbackIdx;
+// the default drop rarity weights for the given mob rarity if the row is
+// missing or every weight in it is 0.
+export function pickWeightedRarity(weights, mobRarityIdx = 0) {
+  if (!Array.isArray(weights)) {
+    // Fallback to default weights for this mob rarity
+    const defaultWeights = DEFAULTS.dropRarityWeights[mobRarityIdx];
+    if (Array.isArray(defaultWeights)) weights = defaultWeights;
+    else return mobRarityIdx;
+  }
   let total = 0;
   for (const w of weights) if (Number.isFinite(w) && w > 0) total += w;
-  if (total <= 0) return fallbackIdx;
+  if (total <= 0) {
+    // Fallback to default weights for this mob rarity
+    const defaultWeights = DEFAULTS.dropRarityWeights[mobRarityIdx];
+    if (Array.isArray(defaultWeights)) weights = defaultWeights;
+    else return mobRarityIdx;
+    // Recalculate total with default weights
+    total = 0;
+    for (const w of weights) if (Number.isFinite(w) && w > 0) total += w;
+    if (total <= 0) return mobRarityIdx;
+  }
   let roll = Math.random() * total;
   for (let i = 0; i < weights.length; i++) {
     const w = weights[i];
@@ -98,7 +121,7 @@ export function pickWeightedRarity(weights, fallbackIdx = 0) {
     if (roll < w) return i;
     roll -= w;
   }
-  return fallbackIdx;
+  return mobRarityIdx;
 }
 
 // Optional hook a server-only module (gameSettingsStore.js) can register to

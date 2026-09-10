@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Florr3D Simulator - Crafting & Drops</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🌸 Florr3D Simulator</h1>
+        
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="crafting">Crafting Simulator</button>
+            <button class="tab-btn" data-tab="drops">Drop Simulator</button>
+        </div>
+
+        <!-- Crafting Tab -->
+        <div id="crafting" class="tab-content active">
+            <div class="form-group">
+                <label>Petal Type:</label>
+                <select id="petalType">
+                    <option value="rose">Rose</option>
+                    <option value="leaf">Leaf</option>
+                    <option value="light">Light</option>
+                    <option value="glass">Glass</option>
+                    <option value="stinger">Stinger</option>
+                    <option value="bubble">Bubble</option>
+                    <option value="iris">Iris</option>
+                    <option value="privet">Privet</option>
+                    <option value="yinyang">Yin Yang</option>
+                    <option value="dahlia">Dahlia</option>
+                    <option value="wing">Wing</option>
+                    <option value="corn">Corn</option>
+                    <option value="rice">Rice</option>
+                    <option value="heavy">Heavy</option>
+                    <option value="orange">Orange</option>
+                    <option value="missile">Missile</option>
+                    <option value="pincer">Pincer</option>
+                    <option value="root">Root</option>
+                    <option value="bur">Bur</option>
+                    <option value="lightbulb">Lightbulb</option>
+                    <option value="magnet">Magnet</option>
+                    <option value="cactusPetal">Cactus</option>
+                    <option value="goldenleaf">Golden Leaf</option>
+                    <option value="beetleegg">Beetle Egg</option>
+                    <option value="nazaramulet">Nazar Amulet</option>
+                    <option value="jobapplication">Job Application</option>
+                    <option value="bloodsacrifice">Blood Sacrifice</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>From Rarity:</label>
+                <select id="fromRarity">
+                    <option value="0">Special</option>
+                    <option value="1">Common</option>
+                    <option value="2">Unusual</option>
+                    <option value="3">Rare</option>
+                    <option value="4">Epic</option>
+                    <option value="5">Legendary</option>
+                    <option value="6">Mythic</option>
+                    <option value="7">Ultra</option>
+                    <option value="8">Super</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>To Rarity:</label>
+                <select id="toRarity">
+                    <option value="1">Common</option>
+                    <option value="2">Unusual</option>
+                    <option value="3">Rare</option>
+                    <option value="4">Epic</option>
+                    <option value="5">Legendary</option>
+                    <option value="6">Mythic</option>
+                    <option value="7">Ultra</option>
+                    <option value="8">Super</option>
+                    <option value="9">Eternal</option>
+                </select>
+            </div>
+
+            <button id="runCrafting" class="btn-primary">Start Crafting Simulation</button>
+
+            <div id="craftingProgress" class="progress-container hidden">
+                <div class="progress-bar">
+                    <div id="craftingProgressBar" class="progress-fill"></div>
+                </div>
+                <div id="craftingProgressText" class="progress-text">0%</div>
+            </div>
+
+            <div id="craftingResults" class="results hidden">
+                <h2>Crafting Results</h2>
+                <div class="result-section">
+                    <h3>10,000 Individual Attempts (3 petals each)</h3>
+                    <div id="craftingSmallResults"></div>
+                </div>
+                <div class="result-section">
+                    <h3>100 Attempts (100 petals each)</h3>
+                    <div id="craftingMediumResults"></div>
+                </div>
+                <div class="result-section">
+                    <h3>100 Attempts (1500 petals each)</h3>
+                    <div id="craftingLargeResults"></div>
+                </div>
+                <div class="result-section final">
+                    <h3>Average Results</h3>
+                    <div id="craftingAverageResults"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Drops Tab -->
+        <div id="drops" class="tab-content">
+            <div class="form-group">
+                <label>Mob Type:</label>
+                <select id="mobType">
+                    <option value="rock">Rock</option>
+                    <option value="ladybug">Ladybug</option>
+                    <option value="bee">Bee</option>
+                    <option value="hornet">Hornet</option>
+                    <option value="soldier">Soldier Ant</option>
+                    <option value="worker">Worker Ant</option>
+                    <option value="baby">Baby Ant</option>
+                    <option value="anthole">Ant Hole</option>
+                    <option value="scorpion">Scorpion</option>
+                    <option value="beetle">Beetle</option>
+                    <option value="cactus">Cactus</option>
+                    <option value="bush">Bush</option>
+                    <option value="shinyladybug">Shiny Ladybug</option>
+                    <option value="jungleladybug">Jungle Ladybug</option>
+                    <option value="leafbug">Leafbug</option>
+                    <option value="goldenleafbug">Golden Leafbug</option>
+                    <option value="nazarbeetle">Nazar Beetle</option>
+                    <option value="firefly">Firefly</option>
+                    <option value="mummybeetle">Mummy Beetle</option>
+                    <option value="egyptbeetle">Pharaoh Beetle</option>
+                    <option value="queen">Queen Ant</option>
+                    <option value="spider">Spider</option>
+                    <option value="centi">Centipede</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Mob Rarity:</label>
+                <select id="mobRarity">
+                    <option value="1">Common</option>
+                    <option value="2">Unusual</option>
+                    <option value="3">Rare</option>
+                    <option value="4">Epic</option>
+                    <option value="5">Legendary</option>
+                    <option value="6">Mythic</option>
+                    <option value="7">Ultra</option>
+                    <option value="8">Super</option>
+                </select>
+            </div>
+
+            <button id="runDrops" class="btn-primary">Start Drop Simulation (10,000,000 kills)</button>
+
+            <div id="dropProgress" class="progress-container hidden">
+                <div class="progress-bar">
+                    <div id="dropProgressBar" class="progress-fill"></div>
+                </div>
+                <div id="dropProgressText" class="progress-text">0%</div>
+            </div>
+
+            <div id="dropResults" class="results hidden">
+                <h2>Drop Results (100,000 kills)</h2>
+                <div id="dropSummary"></div>
+                <div id="dropDetails"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="simulator.js"></script>
+</body>
+</html>

@@ -93,7 +93,7 @@ class Mob {
     this.hp = Math.max(0, this.hp - dealt);
     if (attacker) {
       this.damageBy.set(attacker.id, (this.damageBy.get(attacker.id) || 0) + dealt);
-      attacker.leaderboard.damage += dealt;
+      // attacker.leaderboard.damage += dealt; // TEMPORARILY DISABLED
     }
     this.world.events.push({ e: 'flash', k: 'mob', id: this.id });
     // Rate limit damage events to prevent event array explosion
@@ -194,7 +194,7 @@ class Mob {
       for (const [playerId, damage] of connected) {
         const player = this.world.players.get(playerId);
         if (player) {
-          player.leaderboard.killPoints += killPoints;
+          // player.leaderboard.killPoints += killPoints; // TEMPORARILY DISABLED
           player.events.push({ e: 'toast', text: `You dealt ${Math.round(damage)} damage to the ${rarityName} ${mobName}.` });
         }
       }
@@ -239,9 +239,19 @@ class Mob {
           // across settings.dropRarityWeights[this.rarity] decides the drop's
           // rarity, so admins can now shape the full distribution (any mix of
           // lower/same/higher rarities) instead of only a chance to go one
-          // tier up. Falls back to matching the mob's own rarity if the row is
-          // all-zero or missing.
-        const rarity = pickWeightedRarity(settings.dropRarityWeights[this.rarity], this.rarity);
+          // tier up. Falls back to default drop rarity weights for this mob
+          // rarity if the row is all-zero or missing.
+        const weights = settings.dropRarityWeights[this.rarity];
+        const total = weights.reduce((sum, w) => sum + (Number.isFinite(w) && w > 0 ? w : 0), 0);
+        const rarity = pickWeightedRarity(weights, this.rarity);
+
+        // Debug logging for all rarities to check if fallback is being used
+        if (Math.random() < 0.01) { // Log 1% of all drops
+          const rarityName = RARITIES[this.rarity]?.name || 'Unknown';
+          const dropRarityName = RARITIES[rarity]?.name || 'Unknown';
+          console.log(`[DROP DEBUG] ${rarityName} mob drop: total=${total}, fallback used=${total <= 0}, dropRarity=${dropRarityName}, mobRarity=${rarityName}`);
+        }
+        
         this.world.drops.spawn(dropType, rarity, this.pos, id);
       }
     }

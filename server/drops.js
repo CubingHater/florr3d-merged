@@ -54,7 +54,7 @@ export class DropManager {
         // Obtained-petal leaderboard points apply to map drops only; crafting
         // adds its own attempt score in World.handle.
         const dropPoints = [25, 1, 2, 3, 4, 5, 10, 25, 250, 1000][drop.rarity] || 0;
-        player.leaderboard.dropPoints += dropPoints;
+        // player.leaderboard.dropPoints += dropPoints; // TEMPORARILY DISABLED
         
         // Send global message only for Ultra, Super, Eternal, and Special rarity drops
         const rarityName = RARITIES[drop.rarity]?.name;

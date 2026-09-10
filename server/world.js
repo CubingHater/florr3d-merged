@@ -190,8 +190,8 @@ export class World {
         // Every attempted set of three gets scored. A success moves one level
         // up; failures use the requested failed-attempt scale.
         const successes = gain.count;
-        player.leaderboard.craftPoints += successes * (SUCCESS_CRAFT_POINTS[rarity] || 0)
-          + Math.max(0, attempts - successes) * (FAILED_CRAFT_POINTS[rarity] || 0);
+        // player.leaderboard.craftPoints += successes * (SUCCESS_CRAFT_POINTS[rarity] || 0)
+        //   + Math.max(0, attempts - successes) * (FAILED_CRAFT_POINTS[rarity] || 0); // TEMPORARILY DISABLED
         this.events.push({ e: 'craft', id: player.id, g: gain.count, l: lose.count });
         break;
       }

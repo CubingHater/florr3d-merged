@@ -30,7 +30,27 @@ function getStarterPetals() {
 export const liveAccounts = new Map();
 export let gameWorld = null;
 
-function flushLeaderboard(player) {
+function flushLeaderboard(player, immediate = false) {
+  if (!player?.accountId) return;
+  
+  // Debounce: if there's already a pending flush for this account, skip unless immediate
+  if (!immediate && pendingFlushes.has(player.accountId)) {
+    return;
+  }
+  
+  // Set up debounce timer
+  if (!immediate) {
+    pendingFlushes.set(player.accountId, setTimeout(() => {
+      pendingFlushes.delete(player.accountId);
+      doFlushLeaderboard(player);
+    }, FLUSH_DEBOUNCE_MS));
+    return;
+  }
+  
+  doFlushLeaderboard(player);
+}
+
+function doFlushLeaderboard(player) {
   if (!player?.accountId) return;
   const fields = {
     playSeconds: 'play_seconds', damage: 'damage', craftPoints: 'craft_points',
@@ -44,8 +64,9 @@ function flushLeaderboard(player) {
 }
 
 const TICK_MS = 1000 / 15;
-const AUTOSAVE_MS = 60_000;
+const AUTOSAVE_MS = 300_000; // 5 minutes instead of 1 minute
 const HEARTBEAT_MS = 30_000;
+const FLUSH_DEBOUNCE_MS = 5000; // Prevent rapid successive disconnect flushes
 const MAX_BUFFERED = 1_000_000;
 // Kept low enough to blunt casual abuse from a single source, but high
 // enough that a household/office/dorm sharing one public IP (very common
@@ -72,12 +93,13 @@ export function attachGameServer(httpServer, path = '/ws') {
   const spectators = new Map();
   const accounts = new Map();
   const ipCounts = new Map();
+  const pendingFlushes = new Map(); // Track pending leaderboard flushes to prevent rapid successive writes
   let nextSpecKey = 1;
 
   setInterval(() => {
     for (const [playerId, accountId] of accounts) {
       const player = world.players.get(playerId);
-      if (player) { writeSave(accountId, player.serializeSave()); flushLeaderboard(player); }
+      if (player) { writeSave(accountId, player.serializeSave()); flushLeaderboard(player, true); }
     }
   }, AUTOSAVE_MS);
 
@@ -186,9 +208,15 @@ export function attachGameServer(httpServer, path = '/ws') {
   }, HEARTBEAT_MS);
 
   const shutdown = () => {
+    // Clear any pending flushes and flush immediately
+    for (const timeout of pendingFlushes.values()) {
+      clearTimeout(timeout);
+    }
+    pendingFlushes.clear();
+    
     for (const [playerId, accountId] of accounts) {
       const player = world.players.get(playerId);
-      if (player) { writeSave(accountId, player.serializeSave()); flushLeaderboard(player); }
+      if (player) { writeSave(accountId, player.serializeSave()); flushLeaderboard(player, true); }
     }
     const bye = JSON.stringify({ t: 'update' });
     for (const ws of wss.clients) {
@@ -273,7 +301,7 @@ export function attachGameServer(httpServer, path = '/ws') {
         const acct = accounts.get(player.id);
         if (acct != null) {
           writeSave(acct, player.serializeSave());
-          flushLeaderboard(player);
+          flushLeaderboard(player, false); // Debounced disconnect flush
           accounts.delete(player.id);
           if (liveAccounts.get(acct) === player) liveAccounts.delete(acct);
         }

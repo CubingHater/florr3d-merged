@@ -190,7 +190,7 @@ export class Player {
   update(dt) {
     // Only Discord-linked accounts are eventually published, but keeping the
     // counter on the player gives the socket layer a cheap, batched flush.
-    if (this.accountId != null) this.leaderboard.playSeconds += dt;
+    // if (this.accountId != null) this.leaderboard.playSeconds += dt; // TEMPORARILY DISABLED
     const input = this.input;
 
     if (this.dead) {
