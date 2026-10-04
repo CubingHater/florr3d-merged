@@ -8,7 +8,7 @@ const ORBITS_DEFEND = [ORBIT_DEFEND, /*ORBIT_NEUTRAL*/ORBIT_DEFEND, ORBIT_DEFEND
 
 // One entry per craftable source rarity: Special through Super. Eternal is
 // the final tier and deliberately has no entry.
-export const CRAFT_CHANCES = [60, 30, 15, 7.5, 4.5, 1.5, 1.0, 0.5, 0.1];
+export const CRAFT_CHANCES = [100, 60, 30, 15, 7.5, 4.5, 1.5, 1.0, 0.1];
 
 function n_fn(val) {return function (r) {return val * P_MULTS[r];}}
 function c_fn(val) {return function (r) {return val;}}
@@ -130,7 +130,7 @@ class MissilePetal extends PetalBase {
 class GlassPetal extends PetalBase {
     constructor() {
         super('glass', {
-            name: 'Glass', hp: n_fn(3), dmg: n_fn(15), reload: 3,
+            name: 'Glass', hp: n_fn(3), dmg: n_fn(20), reload: 3,
             radius: rad_fn(0.4), color: '#eaf6fb',
             hitCooldown: 1,
             // Damage = dmg * idle * growth^(speed ratio), where the ratio is
@@ -138,7 +138,7 @@ class GlassPetal extends PetalBase {
             // so a plain walk (ratio 1) is fairly weak and only pairing with
             // Bubble's speed (ratio ~3) reaches the big numbers. For Ultra
             // (base dmg 960): idle-still ≈ 509, walking ≈ 1220, max ≈ 7030.
-            speedDmg: { idle: 0.53, growth: 2.4, maxRatio: 3.0 },
+            speedDmg: { idle: 0.53, growth: 4.4, maxRatio: 7.0 },
             desc: "This one cuts. Damage climbs exponentially with your movement speed — weak at a walk, devastating in flight. Pair with Bubble to hit top speed. Can't hit the same enemy more than once per second.",
         })
     }
@@ -403,7 +403,7 @@ class LightbulbPetal extends PetalBase {
 class DeadRicePetal extends PetalBase {
     constructor() {
         super('holyrice', {
-            name: 'Job Rice', hp: n_fn(3), dmg: n_fn(45), reload: 0.03,
+            name: 'Job Rice', hp: n_fn(1), dmg: n_fn(25), reload: 0.03,
             radius: rad_fn(0.28), color: '#f2f2ec',
             desc: 'Slop. If you got this petal, get a job.',
         })
@@ -424,7 +424,7 @@ class DeadCornPetal extends PetalBase {
 class DeadLeafPetal extends PetalBase {
     constructor() {
         super('holyleaf', {
-            name: 'Job  Leaf', hp: n_fn(36), dmg: n_fn(48), reload: 1,
+            name: 'Job Leaf', hp: n_fn(14), dmg: n_fn(18), reload: 1,
             radius: rad_fn(0.42), color: '#39b54a', heal: n_fn(8),
             desc: 'It heals and damages at the same time. If you got this petal, get a job.',
             stats: function(r) { return [this.s_hp_fn(r), this.s_dmg_fn(r), this.s_heal_fn(r)].join('\n'); }
